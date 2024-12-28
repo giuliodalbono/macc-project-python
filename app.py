@@ -15,7 +15,7 @@ def git_update():
 
 @app.route('/')
 def hello_world():  # put application's code here
-    return 'Githook works!'
+    return 'Final test, githook works!'
 
 
 if __name__ == '__main__':
