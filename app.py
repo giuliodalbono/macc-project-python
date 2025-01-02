@@ -23,7 +23,7 @@ def git_update():
 
 @app.route('/')
 def hello_world():
-    return 'Final test, githook works!'
+    return 'Hello world!'
 
 
 @app.route('/add-user', methods=['POST'])
