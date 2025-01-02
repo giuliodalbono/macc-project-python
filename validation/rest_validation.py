@@ -7,5 +7,7 @@ def validate_content_type(request):
 
 
 def validate_user(json):
-    if not json or not json.get('uid') or not json.get('email') or not json.get('username'):
+    if json is None or "uid" not in json or "email" not in json or "username" not in json:
         return False
+
+    return True
