@@ -14,7 +14,7 @@ def validate_user(json):
 
 
 def validate_chat(json):
-    if json is None or "id" not in json or "name" not in json or "is_public" not in json or "user_id" not in json:
+    if json is None or "name" not in json or "is_public" not in json or "user_id" not in json:
         return False
 
     return True

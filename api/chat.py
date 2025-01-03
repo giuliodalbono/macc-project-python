@@ -17,9 +17,9 @@ def add_chat():
         data = request.get_json()
 
         if not rest_validation.validate_chat(data):
-            return jsonify({"error": "Invalid input: 'id', 'name', 'is_public' and 'user_id' are required"}), 400
+            return jsonify({"error": "Invalid input: 'name', 'is_public' and 'user_id' are required"}), 400
 
-        new_chat = chat.Chat(id=data['id'], name=data['name'], is_public=data['is_public'], user_id=data['user_id'])
+        new_chat = chat.Chat(name=data['name'], is_public=data['is_public'], user_id=data['user_id'])
 
         db.db.session.add(new_chat)
         db.db.session.commit()
