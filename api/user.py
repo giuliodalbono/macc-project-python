@@ -1,12 +1,14 @@
-from app import app
 from db import db
-from flask import jsonify, request
+from flask import Blueprint, jsonify, request
 from model import user
 from validation import rest_validation
 import json
 
 
-@app.route('/add-user', methods=['POST'])
+user_route = Blueprint('user', __name__)
+
+
+@user_route.route('', methods=['POST'])
 def add_user():
     try:
         if not rest_validation.validate_content_type(request):
@@ -27,7 +29,7 @@ def add_user():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/fetch-users')
+@user_route.route('', methods=['GET'])
 def fetch_users():
     users = user.User.query.all()
     return jsonify([u.to_dict() for u in users])

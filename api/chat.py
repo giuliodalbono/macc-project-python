@@ -1,13 +1,15 @@
-from app import app
 from db import db
-from flask import jsonify, request
+from flask import Blueprint, jsonify, request
 from model import chat
 from validation import rest_validation
 import json
 
 
-@app.route('/add-chat', methods=['POST'])
-def add_user():
+chat_route = Blueprint('chat', __name__)
+
+
+@chat_route.route('', methods=['POST'])
+def add_chat():
     try:
         if not rest_validation.validate_content_type(request):
             return 'Content-Type not supported!'
@@ -27,7 +29,7 @@ def add_user():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/fetch-chats')
+@chat_route.route('', methods=['GET'])
 def fetch_users():
     chats = chat.Chat.query.all()
     return jsonify([u.to_dict() for u in chats])
