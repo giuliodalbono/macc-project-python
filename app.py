@@ -1,4 +1,4 @@
-from api import chat, user
+from api import chat, message, user
 from db import config, db
 from flask import Flask
 import git
@@ -12,6 +12,7 @@ db.db.init_app(app)
 
 app.register_blueprint(chat.chat_route, url_prefix='/chat')
 app.register_blueprint(user.user_route, url_prefix='/user')
+app.register_blueprint(message.message_route, url_prefix='/message')
 
 
 @app.route('/git-update', methods=['POST'])
