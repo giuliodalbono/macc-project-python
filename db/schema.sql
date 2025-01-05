@@ -19,6 +19,7 @@ CREATE TABLE message (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   message LONGTEXT NOT NULL,
   translation LONGTEXT NOT NULL,
+  city VARCHAR(255),
   chat_id BIGINT NOT NULL,
   FOREIGN KEY (chat_id) REFERENCES chat (id)
 );

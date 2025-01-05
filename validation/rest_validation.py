@@ -18,3 +18,10 @@ def validate_chat(json):
         return False
 
     return True
+
+
+def validate_message(json):
+    if json is None or "message" not in json or "translation" not in json or "city" not in json or "chat_id" not in json:
+        return False
+
+    return True

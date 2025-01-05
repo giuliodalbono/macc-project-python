@@ -8,6 +8,7 @@ class Message(db.db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     message: Mapped[str] = mapped_column(nullable=False)
     translation: Mapped[str] = mapped_column(nullable=False)
+    city: Mapped[str] = mapped_column()
     chat_id: Mapped[int] = mapped_column(ForeignKey('chat.id'), nullable=False)
 
     def to_dict(self):
