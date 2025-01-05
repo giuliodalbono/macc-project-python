@@ -25,7 +25,7 @@ def add_chat():
         db.db.session.add(new_chat)
         db.db.session.commit()
 
-        return json.dumps(new_chat.to_dict(), indent=4), 200
+        return json.dumps(new_chat.to_dict(), indent=4, default=str), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -47,7 +47,7 @@ def change_privacy_policy(chat_id):
 
         db.db.session.commit()
 
-        return json.dumps(chat_to_update.to_dict(), indent=4), 200
+        return json.dumps(chat_to_update.to_dict(), indent=4, default=str), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

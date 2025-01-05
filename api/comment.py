@@ -24,7 +24,7 @@ def add_comment():
         db.db.session.add(new_comment)
         db.db.session.commit()
 
-        return json.dumps(new_comment.to_dict(), indent=4), 200
+        return json.dumps(new_comment.to_dict(), indent=4, default=str), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

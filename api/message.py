@@ -25,7 +25,7 @@ def add_message():
         db.db.session.add(new_message)
         db.db.session.commit()
 
-        return json.dumps(new_message.to_dict(), indent=4), 200
+        return json.dumps(new_message.to_dict(), indent=4, default=str), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
