@@ -33,9 +33,6 @@ def add_chat():
 @chat_route.route('/<chat_id>', methods=['PUT'])
 def change_privacy_policy(chat_id):
     try:
-        if not rest_validation.validate_content_type(request):
-            return 'Content-Type not supported!'
-
         chat_to_update = (chat.Chat.query
                           .filter(chat.Chat.id == chat_id)
                           .first())
