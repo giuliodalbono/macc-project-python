@@ -1,9 +1,10 @@
+from sqlalchemy import desc
+
 from db import db
 from flask import Blueprint, jsonify, request
 from model import chat
 from validation import rest_validation
 import json
-
 
 chat_route = Blueprint('chat', __name__)
 
@@ -29,7 +30,46 @@ def add_chat():
         return jsonify({"error": str(e)}), 500
 
 
-@chat_route.route('', methods=['GET'])
-def fetch_users():
-    chats = chat.Chat.query.all()
-    return jsonify([u.to_dict() for u in chats])
+@chat_route.route('/<chat_id>', methods=['PUT'])
+def change_privacy_policy(chat_id):
+    try:
+        if not rest_validation.validate_content_type(request):
+            return 'Content-Type not supported!'
+
+        chat_to_update = (chat.Chat.query
+                          .filter(chat.Chat.id == chat_id)
+                          .first())
+
+        if not chat_to_update:
+            return jsonify({"error": "Chat not found"}), 404
+
+        chat_to_update.is_public = not chat_to_update.is_public
+
+        db.db.session.commit()
+
+        return json.dumps(chat_to_update.to_dict(), indent=4), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@chat_route.route('/<chat_id>', methods=['GET'])
+def fetch_chat(chat_id):
+    last_chat = (chat.Chat.query
+                 .filter(chat.Chat.id == chat_id)
+                 .first())
+    return jsonify(last_chat.to_dict()), 200
+
+
+@chat_route.route('/last-from-user/<user_id>', methods=['GET'])
+def fetch_last_chat(user_id):
+    last_chat = (chat.Chat.query
+                 .filter(chat.Chat.user_id == user_id)
+                 .order_by(desc(chat.Chat.last_update))
+                 .first())
+    return jsonify(last_chat.to_dict()), 200
+
+
+@chat_route.route('/from-user/<user_id>', methods=['GET'])
+def fetch_chats(user_id):
+    chats = chat.Chat.query.filter(chat.Chat.user_id == user_id).all()
+    return jsonify([u.to_dict() for u in chats]), 200

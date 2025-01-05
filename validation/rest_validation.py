@@ -25,3 +25,10 @@ def validate_message(json):
         return False
 
     return True
+
+
+def validate_comment(json):
+    if json is None or "message" not in json or "user_id" not in json or "chat_id":
+        return False
+
+    return True
