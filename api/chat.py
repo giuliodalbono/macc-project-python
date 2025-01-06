@@ -82,7 +82,7 @@ def fetch_last_chat(user_id):
             last_chat['preview'] = row_as_dict["message"]
         return jsonify(last_chat), 200
     else:
-        jsonify(last_chat.to_dict()), 200
+        return jsonify(last_chat.to_dict()), 200
 
 
 @chat_route.route('/from-user/<user_id>', methods=['GET'])
