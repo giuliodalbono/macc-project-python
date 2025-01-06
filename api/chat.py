@@ -1,8 +1,8 @@
-from sqlalchemy import desc
-
 from db import db
 from flask import Blueprint, jsonify, request
-from model import chat
+from model import chat, message
+from sqlalchemy import desc
+from sqlalchemy.sql import text
 from validation import rest_validation
 import json
 
@@ -57,6 +57,7 @@ def fetch_chat(chat_id):
     return jsonify(last_chat.to_dict()), 200
 
 
+# TODO Add preview here
 @chat_route.route('/last-from-user/<user_id>', methods=['GET'])
 def fetch_last_chat(user_id):
     last_chat = (chat.Chat.query
@@ -66,7 +67,43 @@ def fetch_last_chat(user_id):
     return jsonify(last_chat.to_dict()), 200
 
 
+# TODO Test this order
 @chat_route.route('/from-user/<user_id>', methods=['GET'])
 def fetch_chats(user_id):
-    chats = chat.Chat.query.filter(chat.Chat.user_id == user_id).all()
+    chats = chat.Chat.query.filter(chat.Chat.user_id == user_id).order_by(desc(chat.Chat.creation_time)).all()
     return jsonify([u.to_dict() for u in chats]), 200
+
+
+@chat_route.route('/community', methods=['GET'])
+def fetch_community_chats():
+    chats = (chat.Chat.query
+             .filter(chat.Chat.is_public.is_(True))
+             .order_by(desc(chat.Chat.last_update))
+             .all())
+
+    ids = [c.id for c in chats]
+
+    query = """
+        SELECT * FROM message m1
+        JOIN message m2
+        ON m1.chat_id = m2.chat_id
+        AND m1.creation_time = m2.creation_time
+        WHERE m2.chat_id IN :ids
+        GROUP BY m2.chat_id;
+    """
+
+    rows = db.db.session.execute(text(query), {"ids": tuple(ids)}).fetchall()
+    rows_as_dicts = [r._asdict() for r in rows]
+
+    chats_as_dict_list = []
+
+    for c in chats:
+        c = c.to_dict()
+        c["preview"] = next((r["message"] for r in rows_as_dicts if r["chat_id"] == c["id"]), None)
+        if c["preview"] is not None:
+            chats_as_dict_list.append(c)
+
+    return jsonify([c for c in chats_as_dict_list]), 200
+
+
+# TODO add put to change name of a chat
