@@ -57,17 +57,32 @@ def fetch_chat(chat_id):
     return jsonify(last_chat.to_dict()), 200
 
 
-# TODO Add preview here
 @chat_route.route('/last-from-user/<user_id>', methods=['GET'])
 def fetch_last_chat(user_id):
     last_chat = (chat.Chat.query
                  .filter(chat.Chat.user_id == user_id)
                  .order_by(desc(chat.Chat.last_update))
                  .first())
-    return jsonify(last_chat.to_dict()), 200
+
+    query = """
+        SELECT * FROM message m1
+        JOIN message m2
+        ON m1.chat_id = m2.chat_id
+        AND m1.creation_time = m2.creation_time
+        WHERE m2.chat_id = :chat_id
+        GROUP BY m2.chat_id;
+    """
+
+    row = db.db.session.execute(text(query), {'chat_id': last_chat.id}).fetchone()
+    row_as_dict = row._asdict()
+
+    last_chat = last_chat.to_dict()
+    if row_as_dict["message"] is not None:
+        last_chat['preview'] = row_as_dict["message"]
+
+    return jsonify(last_chat), 200
 
 
-# TODO Test this order
 @chat_route.route('/from-user/<user_id>', methods=['GET'])
 def fetch_chats(user_id):
     chats = chat.Chat.query.filter(chat.Chat.user_id == user_id).order_by(desc(chat.Chat.creation_time)).all()
