@@ -74,13 +74,15 @@ def fetch_last_chat(user_id):
     """
 
     row = db.db.session.execute(text(query), {'chat_id': last_chat.id}).fetchone()
-    row_as_dict = row._asdict()
+    if row:
+        row_as_dict = row._asdict()
 
-    last_chat = last_chat.to_dict()
-    if row_as_dict["message"] is not None:
-        last_chat['preview'] = row_as_dict["message"]
-
-    return jsonify(last_chat), 200
+        last_chat = last_chat.to_dict()
+        if row_as_dict["message"] is not None:
+            last_chat['preview'] = row_as_dict["message"]
+        return jsonify(last_chat), 200
+    else:
+        jsonify(last_chat.to_dict()), 200
 
 
 @chat_route.route('/from-user/<user_id>', methods=['GET'])
