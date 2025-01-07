@@ -124,7 +124,7 @@ def fetch_community_chats():
 
 
 @chat_route.route('/change-name', methods=['PUT'])
-def fetch_community_chats():
+def change_name():
     try:
         if not rest_validation.validate_content_type(request):
             return 'Content-Type not supported!'
