@@ -123,4 +123,28 @@ def fetch_community_chats():
     return jsonify([c for c in chats_as_dict_list]), 200
 
 
-# TODO add put to change name of a chat
+@chat_route.route('/change-name', methods=['PUT'])
+def fetch_community_chats():
+    try:
+        if not rest_validation.validate_content_type(request):
+            return 'Content-Type not supported!'
+
+        data = request.get_json()
+
+        if not rest_validation.validate_chat_change_name(data):
+            return jsonify({"error": "Invalid input: 'name' and 'chat_id' are required"}), 400
+
+        chat_to_update = (chat.Chat.query
+                          .filter(chat.Chat.id == data['chat_id'])
+                          .first())
+
+        if not chat_to_update:
+            return jsonify({"error": "Chat not found"}), 404
+
+        chat_to_update.name = data['name']
+
+        db.db.session.commit()
+
+        return json.dumps(chat_to_update.to_dict(), indent=4, default=str), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

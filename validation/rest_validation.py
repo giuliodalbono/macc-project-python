@@ -32,3 +32,10 @@ def validate_comment(json):
         return False
 
     return True
+
+
+def validate_chat_change_name(json):
+    if json is None or "name" not in json or "chat_id" not in json:
+        return False
+
+    return True
