@@ -87,8 +87,32 @@ def fetch_last_chat(user_id):
 
 @chat_route.route('/from-user/<user_id>', methods=['GET'])
 def fetch_chats(user_id):
-    chats = chat.Chat.query.filter(chat.Chat.user_id == user_id).order_by(desc(chat.Chat.creation_time)).all()
-    return jsonify([u.to_dict() for u in chats]), 200
+    chats = (chat.Chat.query
+             .filter(chat.Chat.user_id == user_id)
+             .order_by(desc(chat.Chat.creation_time))
+             .all())
+
+    ids = [c.id for c in chats]
+
+    query = """
+        SELECT * FROM message m1
+        JOIN message m2
+        ON m1.chat_id = m2.chat_id
+        AND m1.creation_time = m2.creation_time
+        WHERE m2.chat_id IN :ids
+        GROUP BY m2.chat_id;
+    """
+
+    rows = db.db.session.execute(text(query), {"ids": tuple(ids)}).fetchall()
+    rows_as_dicts = [r._asdict() for r in rows]
+
+    chats_as_dict_list = []
+
+    for c in chats:
+        c = c.to_dict()
+        c["preview"] = next((r["message"] for r in rows_as_dicts if r["chat_id"] == c["id"]), None)
+
+    return jsonify([c for c in chats_as_dict_list]), 200
 
 
 @chat_route.route('/community', methods=['GET'])
