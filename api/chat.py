@@ -111,6 +111,7 @@ def fetch_chats(user_id):
     for c in chats:
         c = c.to_dict()
         c["preview"] = next((r["message"] for r in rows_as_dicts if r["chat_id"] == c["id"]), None)
+        chats_as_dict_list.append(c)
 
     return jsonify([c for c in chats_as_dict_list]), 200
 
