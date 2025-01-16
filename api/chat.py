@@ -133,14 +133,17 @@ def fetch_community_chats():
     if not ids:
         return jsonify([]), 200
 
-    # Define the query with proper escaping for MySQL
+    # Define the query to join Message, User, and fetch usernames
     query = """
         SELECT m1.*, u.username
         FROM message m1
-        JOIN message m2 ON m1.chat_id = m2.chat_id AND m1.creation_time = m2.creation_time
+        JOIN (
+            SELECT chat_id, MAX(creation_time) as max_time
+            FROM message
+            WHERE chat_id IN :ids
+            GROUP BY chat_id
+        ) m2 ON m1.chat_id = m2.chat_id AND m1.creation_time = m2.max_time
         JOIN `user` u ON m1.user_id = u.uid
-        WHERE m2.chat_id IN :ids
-        GROUP BY m1.chat_id, m1.creation_time, m1.id, u.uid;
     """
 
     try:
