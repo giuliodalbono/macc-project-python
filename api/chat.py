@@ -118,35 +118,42 @@ def fetch_chats(user_id):
 
 @chat_route.route('/community', methods=['GET'])
 def fetch_community_chats():
-    chats = (chat.Chat.query
-             .filter(chat.Chat.is_public.is_(True))
-             .order_by(desc(chat.Chat.last_update))
-             .all())
+    # Fetch public chats
+    chats = (
+        chat.Chat.query
+        .filter(chat.Chat.is_public.is_(True))
+        .order_by(desc(chat.Chat.last_update))
+        .all()
+    )
 
+    # Extract chat IDs
     ids = [c.id for c in chats]
 
+    # Modify the query to include the username by joining the `user` table
     query = """
-        SELECT * FROM message m1
-        JOIN message m2
-        ON m1.chat_id = m2.chat_id
-        AND m1.creation_time = m2.creation_time
+        SELECT m1.*, u.username
+        FROM message m1
+        JOIN message m2 ON m1.chat_id = m2.chat_id AND m1.creation_time = m2.creation_time
+        JOIN "user" u ON m1.user_id = u.uid
         WHERE m2.chat_id IN :ids
-        GROUP BY m2.chat_id;
+        GROUP BY m2.chat_id, m1.id, u.uid;
     """
 
+    # Execute the query
     rows = db.db.session.execute(text(query), {"ids": tuple(ids)}).fetchall()
     rows_as_dicts = [r._asdict() for r in rows]
 
+    # Prepare chat list with previews and usernames
     chats_as_dict_list = []
-
     for c in chats:
         c = c.to_dict()
-        c["preview"] = next((r["message"] for r in rows_as_dicts if r["chat_id"] == c["id"]), None)
-        if c["preview"] is not None:
+        preview_row = next((r for r in rows_as_dicts if r["chat_id"] == c["id"]), None)
+        if preview_row:
+            c["preview"] = preview_row["message"]
+            c["username"] = preview_row["username"]  # Include the username
             chats_as_dict_list.append(c)
 
-    return jsonify([c for c in chats_as_dict_list]), 200
-
+    return jsonify(chats_as_dict_list), 200
 
 @chat_route.route('/change-name', methods=['PUT'])
 def change_name():
