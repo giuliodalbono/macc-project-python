@@ -1,6 +1,6 @@
 from db import db
 from flask import Blueprint, jsonify, request
-from model import chat, message
+from model import chat, message, user
 from sqlalchemy import desc
 from sqlalchemy.sql import text
 from validation import rest_validation
@@ -120,53 +120,36 @@ def fetch_chats(user_id):
 def fetch_community_chats():
     # Fetch public chats
     chats = (
-        chat.Chat.query
+        db.db.session.query(chat.Chat, user.User.username)
+        .join(user.User, chat.Chat.user_id == user.User.uid)
         .filter(chat.Chat.is_public.is_(True))
         .order_by(desc(chat.Chat.last_update))
         .all()
     )
 
-    # Extract chat IDs
     ids = [c.id for c in chats]
 
-    # Return early if no chats are found
-    if not ids:
-        return jsonify([]), 200
-
-    # Define the query to join Message, User, and fetch usernames
     query = """
-        SELECT m1.*, u.username
-        FROM message m1
-        JOIN (
-            SELECT chat_id, MAX(creation_time) as max_time
-            FROM message
-            WHERE chat_id IN :ids
-            GROUP BY chat_id
-        ) m2 ON m1.chat_id = m2.chat_id AND m1.creation_time = m2.max_time
-        JOIN `user` u ON m1.user_id = u.uid
+        SELECT * FROM message m1
+        JOIN message m2
+        ON m1.chat_id = m2.chat_id
+        AND m1.creation_time = m2.creation_time
+        WHERE m2.chat_id IN :ids
+        GROUP BY m2.chat_id;
     """
 
-    try:
-        # Execute the query
-        rows = db.db.session.execute(text(query), {"ids": tuple(ids)}).fetchall()
-        rows_as_dicts = [r._asdict() for r in rows]
+    rows = db.db.session.execute(text(query), {"ids": tuple(ids)}).fetchall()
+    rows_as_dicts = [r._asdict() for r in rows]
 
-        # Prepare chat list with previews and usernames
-        chats_as_dict_list = []
-        for c in chats:
-            c = c.to_dict()
-            preview_row = next((r for r in rows_as_dicts if r["chat_id"] == c["id"]), None)
-            if preview_row:
-                c["preview"] = preview_row["message"]
-                c["username"] = preview_row["username"]  # Include the username
-                chats_as_dict_list.append(c)
+    chats_as_dict_list = []
 
-        return jsonify(chats_as_dict_list), 200
+    for c in chats:
+        c = c.to_dict()
+        c["preview"] = next((r["message"] for r in rows_as_dicts if r["chat_id"] == c["id"]), None)
+        if c["preview"] is not None:
+            chats_as_dict_list.append(c)
 
-    except Exception as e:
-        # Log the error for debugging
-        print(f"Error: {e}")
-        return jsonify({"error": "Internal server error"}), 500
+    return jsonify([c for c in chats_as_dict_list]), 200
 
 @chat_route.route('/change-name', methods=['PUT'])
 def change_name():
