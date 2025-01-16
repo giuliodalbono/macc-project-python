@@ -1,6 +1,6 @@
 from db import db
 from flask import Blueprint, jsonify, request
-from model import comment
+from model import comment, user
 from validation import rest_validation
 import json
 
@@ -31,5 +31,12 @@ def add_comment():
 
 @comment_route.route('/<chat_id>', methods=['GET'])
 def fetch_comments(chat_id):
-    comments = comment.Comment.query.filter(comment.Comment.chat_id == chat_id).all()
+    # Perform a join between comments and users to fetch the username
+    comments = (
+        db.db.session.query(comment.Comment, user.User)  # Query comments and usernames
+        .join(comment.Comment.user_id == user.User.uid)  # Join on user_id
+        .filter(comment.Comment.chat_id == chat_id)  # Filter by chat_id
+        .all()
+    )
+
     return jsonify([u.to_dict() for u in comments])
