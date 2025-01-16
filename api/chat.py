@@ -118,38 +118,51 @@ def fetch_chats(user_id):
 
 @chat_route.route('/community', methods=['GET'])
 def fetch_community_chats():
-    # Fetch public chats
-    chats = (
-        db.db.session.query(chat.Chat, user.User.username)
-        .join(user.User, chat.Chat.user_id == user.User.uid)
-        .filter(chat.Chat.is_public.is_(True))
-        .order_by(desc(chat.Chat.last_update))
-        .all()
-    )
+    try:
+        # Fetch public chats with usernames of users who created them
+        chats = (
+            db.db.session.query(chat.Chat, user.User.username)
+            .join(user.User, chat.Chat.user_id == user.User.uid)
+            .filter(chat.Chat.is_public.is_(True))
+            .order_by(desc(chat.Chat.last_update))
+            .all()
+        )
 
-    ids = [c.id for c in chats]
+        # Extract chat IDs to fetch message previews
+        ids = [c.Chat.id for c in chats]
+        if not ids:
+            return jsonify([]), 200  # Handle empty list of chats
 
-    query = """
-        SELECT * FROM message m1
-        JOIN message m2
-        ON m1.chat_id = m2.chat_id
-        AND m1.creation_time = m2.creation_time
-        WHERE m2.chat_id IN :ids
-        GROUP BY m2.chat_id;
-    """
+        # Query messages to get the latest message preview for each chat
+        query = """
+            SELECT m1.id AS message_id, m1.chat_id, m1.message, m1.creation_time
+            FROM message m1
+            INNER JOIN (
+                SELECT chat_id, MAX(creation_time) AS max_time
+                FROM message
+                WHERE chat_id IN :ids
+                GROUP BY chat_id
+            ) m2 ON m1.chat_id = m2.chat_id AND m1.creation_time = m2.max_time
+        """
 
-    rows = db.db.session.execute(text(query), {"ids": tuple(ids)}).fetchall()
-    rows_as_dicts = [r._asdict() for r in rows]
+        rows = db.db.session.execute(text(query), {"ids": tuple(ids)}).fetchall()
+        rows_as_dicts = [r._asdict() for r in rows]
 
-    chats_as_dict_list = []
+        # Build response with chat data, preview messages, and usernames
+        chats_as_dict_list = []
+        for c, username in chats:
+            chat_data = c.to_dict()
+            preview_row = next((r for r in rows_as_dicts if r["chat_id"] == chat_data["id"]), None)
+            if preview_row:
+                chat_data["preview"] = preview_row["message"]
+                chat_data["username"] = username  # Use the username from the first query
+                chats_as_dict_list.append(chat_data)
 
-    for c in chats:
-        c = c.to_dict()
-        c["preview"] = next((r["message"] for r in rows_as_dicts if r["chat_id"] == c["id"]), None)
-        if c["preview"] is not None:
-            chats_as_dict_list.append(c)
+        return jsonify(chats_as_dict_list), 200
 
-    return jsonify([c for c in chats_as_dict_list]), 200
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": "Internal server error, " + e}), 500
 
 @chat_route.route('/change-name', methods=['PUT'])
 def change_name():
