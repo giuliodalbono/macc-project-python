@@ -36,6 +36,7 @@ def fetch_comments(chat_id):
         db.db.session.query(comment.Comment, user.User.username)  # Query comments and usernames
         .join(user.User, comment.Comment.user_id == user.User.uid)  # Join on user_id
         .filter(comment.Comment.chat_id == chat_id)  # Filter by chat_id
+        .order_by(comment.Comment.last_update.desc())
         .all()
     )
 
