@@ -1,5 +1,4 @@
 from _datetime import datetime
-from datetime import timezone, timedelta
 
 from sqlalchemy import ForeignKey
 
@@ -13,8 +12,8 @@ class Chat(db.db.Model):
     name: Mapped[str] = mapped_column(nullable=False)
     is_public: Mapped[bool] = mapped_column(nullable=False, default=False)
     user_id: Mapped[str] = mapped_column(ForeignKey('user.uid'), nullable=False)
-    creation_time: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now(tz=timezone(timedelta(hours=1))))
-    last_update: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now(tz=timezone(timedelta(hours=1))))
+    creation_time: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now())
+    last_update: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now())
 
     def to_dict(self):
         return {"id": self.id, "name": self.name, "is_public": self.is_public, "user_id": self.user_id,
