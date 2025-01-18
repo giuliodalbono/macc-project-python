@@ -113,7 +113,7 @@ def fetch_chats(user_id):
         c["preview"] = next((r["message"] for r in rows_as_dicts if r["chat_id"] == c["id"]), None)
         chats_as_dict_list.append(c)
 
-    return jsonify([c for c in chats_as_dict_list]), 200
+    return json.dumps(chats_as_dict_list, indent=4, default=str), 200
 
 
 @chat_route.route('/community', methods=['GET'])
