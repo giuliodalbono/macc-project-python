@@ -11,8 +11,8 @@ class Chat(db.db.Model):
     name: Mapped[str] = mapped_column(nullable=False)
     is_public: Mapped[bool] = mapped_column(nullable=False, default=False)
     user_id: Mapped[str] = mapped_column(ForeignKey('user.uid'), nullable=False)
-    creation_time: Mapped[datetime] = mapped_column(nullable=False, default=datetime.now())
-    last_update: Mapped[datetime] = mapped_column(nullable=False, default=datetime.now())
+    creation_time: Mapped[datetime] = mapped_column(nullable=False)
+    last_update: Mapped[datetime] = mapped_column(nullable=False)
 
     def to_dict(self):
         return {"id": self.id, "name": self.name, "is_public": self.is_public, "user_id": self.user_id,
