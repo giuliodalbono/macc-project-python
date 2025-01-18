@@ -48,4 +48,4 @@ def fetch_comments(chat_id):
         for c, username in comments
     ]
 
-    return jsonify(response)
+    return json.dumps(response, indent=4, default=str)

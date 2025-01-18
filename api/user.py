@@ -32,4 +32,5 @@ def add_user():
 @user_route.route('', methods=['GET'])
 def fetch_users():
     users = user.User.query.all()
-    return jsonify([u.to_dict() for u in users])
+    response = [{**m.to_dict()} for m in users]
+    return json.dumps(response, indent=4, default=str), 200

@@ -1,6 +1,6 @@
 from db import db
 from flask import Blueprint, jsonify, request
-from model import chat, message, user
+from model import chat, user
 from sqlalchemy import desc
 from sqlalchemy.sql import text
 from validation import rest_validation
@@ -54,7 +54,7 @@ def fetch_chat(chat_id):
     last_chat = (chat.Chat.query
                  .filter(chat.Chat.id == chat_id)
                  .first())
-    return jsonify(last_chat.to_dict()), 200
+    return json.dumps(last_chat.to_dict(), indent=4, default=str), 200
 
 
 @chat_route.route('/last-from-user/<user_id>', methods=['GET'])
@@ -80,7 +80,7 @@ def fetch_last_chat(user_id):
         last_chat = last_chat.to_dict()
         if row_as_dict["message"] is not None:
             last_chat['preview'] = row_as_dict["message"]
-        return jsonify(last_chat), 200
+        return json.dumps(last_chat, indent=4, default=str), 200
     else:
         return jsonify(last_chat.to_dict()), 200
 
@@ -158,11 +158,12 @@ def fetch_community_chats():
                 chat_data["username"] = username  # Use the username from the first query
                 chats_as_dict_list.append(chat_data)
 
-        return jsonify(chats_as_dict_list), 200
+        return json.dumps(chats_as_dict_list, indent=4, default=str), 200
 
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({"error": "Internal server error, " + e}), 500
+
 
 @chat_route.route('/change-name', methods=['PUT'])
 def change_name():

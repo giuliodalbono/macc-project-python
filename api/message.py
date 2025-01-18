@@ -33,4 +33,5 @@ def add_message():
 @message_route.route('/<chat_id>', methods=['GET'])
 def fetch_messages(chat_id):
     messages = message.Message.query.filter(message.Message.chat_id == chat_id).all()
-    return jsonify([u.to_dict() for u in messages])
+    response = [{**m.to_dict()} for m in messages]
+    return json.dumps(response, indent=4, default=str), 200
