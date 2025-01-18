@@ -82,6 +82,7 @@ def fetch_last_chat(user_id):
             last_chat['preview'] = row_as_dict["message"]
         return json.dumps(last_chat, indent=4, default=str), 200
     else:
+        last_chat = last_chat.to_dict()
         return json.dumps(last_chat, indent=4, default=str), 200
 
 
