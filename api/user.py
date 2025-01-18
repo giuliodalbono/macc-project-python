@@ -1,3 +1,5 @@
+from sqlalchemy import desc
+
 from db import db
 from flask import Blueprint, jsonify, request
 from model import user
@@ -32,7 +34,9 @@ def add_user():
 
 @user_route.route('', methods=['GET'])
 def fetch_users():
-    users = user.User.query.all()
+    users = (user.User.query
+             .order_by(desc(user.User.last_update))
+             .all())
     response = [{**m.to_dict()} for m in users]
     return json.dumps(response, indent=4, default=str), 200
 
@@ -40,6 +44,6 @@ def fetch_users():
 @user_route.route('/<user_id>', methods=['GET'])
 def fetch_user(user_id):
     user_fetched = (user.User.query
-                    .filter(user.User.id == user_id)
+                    .filter(user.User.uid == user_id)
                     .first())
     return json.dumps(user_fetched.to_dict(), indent=4, default=str), 200
